@@ -1,6 +1,6 @@
 numpy
 pandas
-sagemaker>=2.0.0<3.0.0
+sagemaker>=2.0.0,<3.0.0
 sagemaker[local]
 torch==2.2.0
 transformers==4.38.0

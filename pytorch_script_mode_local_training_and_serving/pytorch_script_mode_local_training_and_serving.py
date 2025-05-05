@@ -60,6 +60,7 @@ def main():
                                 py_version='py310',
                                 instance_count=1,
                                 instance_type='local',
+                                sagemaker_session=sagemaker_session,
                                 hyperparameters={
                                     'epochs': 1,
                                 })

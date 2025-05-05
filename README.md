@@ -15,27 +15,6 @@ For full details on how this works:
 
 - Read the Machine Learning Blog post at: https://aws.amazon.com/blogs/machine-learning/use-the-amazon-sagemaker-local-mode-to-train-on-your-notebook-instance/
 
-## SageMaker local mode training and serving in PyCharm/Visual Studio Code
-This repository examples will work in any IDE on your local machine. 
-
-Here you can see a TensorFlow example running on PyCharm. **The data for processing, training and serving is also located on your local machine file system**.
-
-#### SageMaker local mode training in PyCharm
-
-![SageMaker local mode training in PyCharm](img/pycharm_sagemaker_local_training.png)
-
-#### SageMaker local mode serving in PyCharm
-
-![SageMaker local mode serving in PyCharm](img/pycharm_sagemaker_local_serving.png)
-
-#### SageMaker local mode processing jobs in PyCharm
-
-![SageMaker local mode processing jobs in PyCharm](img/pycharm_sagemaker_local_processing_jobs.png)
-
-#### Debugging your training script running SageMaker local mode training in PyCharm
-
-![Debug your application](img/debug_your_application_2.png)
-
 
 ### Repository Structure
 
@@ -100,7 +79,9 @@ The repository contains the following resources:
 
 **Note**: Those examples were tested on macOS, Linux and Windows.
 
-### Prerequisites
+## Prerequisites and Installation
+
+Before running the examples in this repository, you need to set up your environment:
 
 1. [Create an AWS account](https://portal.aws.amazon.com/gp/aws/developer/registration/index.html) if you do not already have one and login.
 
@@ -114,6 +95,71 @@ The repository contains the following resources:
 
 6. Make sure you have pip installed `pip --version`
 
+7. Clone this repository:
+   ```bash
+   git clone https://github.com/Carma-tech/amazon-sagemaker-local-mode.git
+   ```
+   ```bash
+   cd amazon-sagemaker-local-mode
+   ```
+
+8. Create a new virtual environment and activate it: 
+   ```bash
+   python -m venv venv
+   ```
+   ```bash
+   source venv/bin/activate
+   ```
+
+9. Install the required Python packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Quick Start Examples
+
+Here are some examples you can run to get started quickly:
+
+1. **TensorFlow California Housing**:
+   ```bash
+   cd tensorflow_script_mode_california_housing_local_training_and_serving
+   python tensorflow_script_mode_california_housing_local_training_and_serving.py
+   ```
+
+2. **PyTorch CIFAR-10**:
+   ```bash
+   cd pytorch_script_mode_local_training_and_serving
+   python pytorch_script_mode_local_training_and_serving.py
+   ```
+
+3. **XGBoost**:
+   ```bash
+   cd xgboost_script_mode_local_training_and_serving
+   python xgboost_script_mode_local_training_and_serving.py
+   ```
+
+> **Note**: For a containerized approach that eliminates the need to install dependencies directly on your machine, see [DOCKER_INSTRUCTIONS.md](DOCKER_INSTRUCTIONS.md). The Docker option makes it easier to run these examples in a consistent environment.
+
+## SageMaker local mode training and serving in PyCharm/Visual Studio Code
+This repository examples will work in any IDE on your local machine. 
+
+Here you can see a TensorFlow example running on PyCharm. **The data for processing, training and serving is also located on your local machine file system**.
+
+#### SageMaker local mode training in PyCharm
+
+![SageMaker local mode training in PyCharm](img/pycharm_sagemaker_local_training.png)
+
+#### SageMaker local mode serving in PyCharm
+
+![SageMaker local mode serving in PyCharm](img/pycharm_sagemaker_local_serving.png)
+
+#### SageMaker local mode processing jobs in PyCharm
+
+![SageMaker local mode processing jobs in PyCharm](img/pycharm_sagemaker_local_processing_jobs.png)
+
+#### Debugging your training script running SageMaker local mode training in PyCharm
+
+![Debug your application](img/debug_your_application_2.png)
 
 ### Installation Instructions for PyCharm
 We assume the root folder of the project is `~/Documents/dev/`
@@ -154,6 +200,7 @@ We assume the root folder of the project is `~/Documents/dev/`
 
 15. The container image download might take a few minutes to complete, but eventually you will View the output
 ![view tf output](img/output_tf_training_and_serving.png)
+
 
 ### Installation Instructions for SageMaker Notebook instances
 

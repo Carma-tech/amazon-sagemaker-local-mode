@@ -1,6 +1,5 @@
-sklearn
+scikit-learn
 numpy
 pandas
-sagemaker>=2.0.0<3.0.0
+sagemaker>=2.0.0,<3.0.0
 sagemaker[local]
-scikit-learn

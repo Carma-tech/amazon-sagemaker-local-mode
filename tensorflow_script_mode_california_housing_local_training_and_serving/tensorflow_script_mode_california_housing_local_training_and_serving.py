@@ -14,10 +14,13 @@ import os
 
 import numpy as np
 import pandas as pd
+import sagemaker.local
+import sagemaker.session
 from sklearn.datasets import *
 import sklearn.model_selection
 from sklearn.preprocessing import StandardScaler
 from sagemaker.tensorflow import TensorFlow
+from sagemaker.local import LocalSession
 
 
 DUMMY_IAM_ROLE = 'arn:aws:iam::111111111111:role/service-role/AmazonSageMaker-ExecutionRole-20200101T000001'
@@ -79,13 +82,19 @@ def main():
     print('Starting model training.')
     print(
         'Note: if launching for the first time in local mode, container image download might take a few minutes to complete.')
+    
+    #  Explicitly create a Local Session
+    sagemaker_local_session = LocalSession()
+    sagemaker_local_session.config = {'local': {'local_code': True}} 
+
     california_housing_estimator = TensorFlow(entry_point='california_housing_tf2.py',
                                               source_dir='code',
                                               role=DUMMY_IAM_ROLE,
                                               instance_count=1,
                                               instance_type='local',
                                               framework_version='2.8',
-                                              py_version='py39')
+                                              py_version='py39',
+                                              sagemaker_session=sagemaker_local_session)
 
     inputs = {'train': 'file://./data/train', 'test': 'file://./data/test'}
     california_housing_estimator.fit(inputs)
