@@ -1,0 +1,36 @@
+# Note: 'version' attribute is obsolete in newer Docker Compose versions
+# Don't use version field to avoid warnings
+
+services:
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:latest
+    ports:
+      - "4567:4566"            # LocalStack Gateway (exposed on 4567 to avoid conflict)
+      - "8081:8080"            # Web UI port (exposed on 8081 to avoid conflict)
+    environment:
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - HOSTNAME_EXTERNAL=localhost  # Important for correct URL formation
+      - SERVICES=stepfunctions,batch,iam,s3,cloudwatch,lambda,logs,events,sqs
+      - DEFAULT_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - PERSISTENCE=1
+      - GATEWAY_LISTEN=0.0.0.0:4566  # Listen on all interfaces
+      - START_WEB=1                   # Enable built-in web interface
+      - WEB_UI=1                      # Explicit enable for web UI
+      - DISABLE_CORS_CHECKS=1         # Disable CORS for easier access
+      - DISABLE_ACCELERATION=1        # Disable S3 acceleration
+      - S3_SKIP_SIGNATURE_VALIDATION=1
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# Use default network, no need for custom network definition

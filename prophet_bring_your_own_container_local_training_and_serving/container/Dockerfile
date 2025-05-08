@@ -4,7 +4,7 @@
 
 FROM ubuntu:18.04
 
-MAINTAINER Amazon AI <sage-learner@amazon.com>
+LABEL maintainer="Amazon AI <sage-learner@amazon.com>"
 
 RUN apt-get -y update
 
@@ -47,4 +47,3 @@ ENV PATH="/opt/program:${PATH}"
 # Set up the program in the image
 COPY prophet /opt/program
 WORKDIR /opt/program
-
