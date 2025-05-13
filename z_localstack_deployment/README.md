@@ -1,47 +1,60 @@
-# LocalStack + SageMaker Local Mode Integration
+# Asynchronous SageMaker Local Mode with LocalStack Integration
 
-This project demonstrates how to run an AWS SageMaker ML workflow locally using LocalStack and SageMaker local mode. The implementation provides multiple approaches, with the recommended option highlighted below.
+This project implements an integrated workflow for AWS SageMaker in local mode with LocalStack, featuring an asynchronous execution model that allows long-running ML training and inference jobs to run in the background. The implementation is especially optimized for inference workloads and TensorFlow model support.
 
-1. **Direct Pipeline** (`direct_pipeline.py`): Simple script that runs SageMaker locally with LocalStack for storage
-2. **Step Functions Definition** (`step_functions_definition.py`): Creates a Step Functions state machine but has Lambda execution issues
-3. **Complete Workflow** (`complete_workflow.py`): Creates Lambda functions but they remain in Pending state
-4. **Direct Step Functions** (`direct_step_functions.py`): Combines Step Functions orchestration with SageMaker execution
-5. **✅ Direct Integration** (`direct_integration.py`): **RECOMMENDED** - Integrates real ML model outputs with Step Functions
+## Key Components
 
-## Overview
+1. **🔄 Asynchronous ML Workflow** (`async_ml_workflow.py`): **MAIN ENTRY POINT** - Runs ML jobs in the background with comprehensive status tracking
+2. **🏋️ Training Module** (`local_train.py`): Trains models using scikit-learn or TensorFlow with California Housing dataset
+3. **🚀 Deployment Module** (`local_serve.py`): Deploys models to local Flask-based endpoints
+4. **🔮 Inference Module** (`inference.py`): **FOCUS AREA** - Flexible inference with comprehensive metrics and model type detection
+5. **☁️ LocalStack Integration** (`localstack_ml_workflow.py`): Sets up AWS resources locally for zero-cost development
 
-This integration allows you to:
+## Key Benefits
 
-- Train and deploy machine learning models locally without AWS costs
-- Use AWS Step Functions for orchestration 
-- Store data and artifacts in S3 (emulated by LocalStack)
-- Execute multiple ML frameworks (TensorFlow, XGBoost, PyTorch)
-- Maintain code compatibility with real AWS
+This asynchronous workflow provides:
+
+- **Background Execution**: ML jobs run asynchronously, freeing up the terminal for other tasks
+- **Real-time Status Updates**: Monitor training and deployment progress without blocking
+- **Multiple Model Support**: Use scikit-learn or TensorFlow models interchangeably
+- **Framework Detection**: Auto-detects model framework during inference
+- **LocalStack Integration**: Full AWS compatibility without cloud costs
+- **Step Functions Compatibility**: Works with Step Functions for orchestration
+- **Comprehensive Metrics**: Detailed metrics for model evaluation during inference
+- **TensorFlow Optimization**: Special handling for TensorFlow inference
 
 ## Prerequisites
 
-- Docker and Docker Compose
 - Python 3.9+
-- AWS CLI
-- LocalStack CLI (`pip install localstack awscli`)
-- The AWS Toolkit extension for your IDE (optional, for visualizing Step Functions)
+- Docker (for LocalStack Desktop)
+- LocalStack Desktop (recommended) or LocalStack CLI
+- Required Python packages: boto3, scikit-learn, tensorflow, flask
 
 ## Setup
 
-### 1. Start LocalStack with Required Services
+### 1. Start LocalStack (Recommended: Docker Compose)
 
+**The most reliable and reproducible way to run LocalStack for this ML workflow is via Docker Compose. This ensures all required AWS services are started with the correct configuration and ports.**
+
+From the `z_localstack_deployment` directory:
 ```bash
-cd /Users/user/projects/carma_tech_projects/amazon-sagemaker-local-mode/z_localstack_deployment
 docker-compose up -d
 ```
 
-This starts a LocalStack container with all necessary services:
-- S3 (for data storage)
-- StepFunctions (for workflow orchestration)
-- IAM (for roles and permissions)
-- Lambda (for workflow steps)
-- SQS (for task communication)
-- CloudWatch (for logs)
+This will start LocalStack with all necessary services for ML workflows, including S3, Lambda, Step Functions, IAM, CloudWatch, and more. The configuration is controlled by `docker-compose.yml` in this directory. You can check and modify the list of enabled services in that file (see the `SERVICES` environment variable).
+
+**Alternatives:**
+- LocalStack Desktop (GUI, for local development)
+- LocalStack CLI (`localstack start`)
+
+> **Note:** For team setups, CI, or reproducibility, always prefer the Docker Compose method.
+
+This setup provides local versions of essential AWS services:
+- S3: Model storage and data management
+- Lambda: Function execution
+- Step Functions: Workflow orchestration
+- IAM: Permission management
+- CloudWatch: Logging and monitoring
 
 ### 2. Configure AWS CLI for LocalStack
 
@@ -69,92 +82,142 @@ curl http://localhost:4567/_localstack/health
 
 Confirm that the services show as "available" or "running" in the output.
 
-## Running the Workflows
+## Running the Asynchronous ML Workflow
 
-### ✅ Recommended Approach: Direct Integration
-
-This approach creates a Step Functions workflow with REAL model predictions and metrics from an actual ML model:
+### Setting Up LocalStack Resources
 
 ```bash
-python direct_integration.py
+python async_ml_workflow.py setup
+```
+This initializes all required resources in LocalStack:
+- Creates S3 buckets with proper configuration
+- Sets up required prefixes (data, models, output, logs)
+- Applies correct S3 endpoint settings for LocalStack compatibility
+
+### Training a Model in the Background
+
+```bash
+python async_ml_workflow.py train --model-type random_forest
+```
+Alternative model types:
+- `--model-type linear_regression`
+- `--model-type tensorflow`
+
+The training job runs in the background, freeing your terminal. The model is automatically saved as a tarball artifact.
+
+### Deploying a Model as a Background Service
+
+```bash
+python async_ml_workflow.py deploy --model-artifact model/model.tar.gz --endpoint-name my-endpoint --port 8080
 ```
 
-This script:
-1. Trains an actual ML model on the California Housing dataset
-2. Captures real predictions, actual values, and model metrics (MSE, R²)
-3. Uses these real values in the Step Functions state machine
-4. Visualizes the complete workflow in AWS Toolkit with actual model results
-5. Shows detailed comparison of predictions vs. actual values
+This starts a Flask-based local endpoint in the background that's compatible with SageMaker's protocol.
 
-### Alternative: Direct Step Functions 
-
-If you need more control over SageMaker script execution:
+### Running Inference (Focus Area)
 
 ```bash
-python direct_step_functions.py [--non-interactive] [--model-dir DIR_NAME] [--script-name SCRIPT_NAME]
+python inference.py --endpoint-name my-endpoint --method direct
 ```
 
-This script:
-1. Creates a Step Functions state machine using Pass states
-2. Visualizes the ML workflow for AWS Toolkit
-3. Allows selection of different SageMaker model frameworks
-4. Works in both interactive and non-interactive modes
+Inference supports multiple methods:
+- `--method direct`: HTTP requests directly to the endpoint (fastest)
+- `--method boto3`: Uses boto3 SageMaker client
+- `--method predictor`: Uses SageMaker Python SDK Predictor
 
-### Alternative: Direct Pipeline
-
-For simple testing without Step Functions orchestration:
-
+Direct model inference (without endpoint):
 ```bash
-python direct_pipeline.py
+python inference.py --model-artifact model/model.tar.gz
 ```
 
-This script directly executes SageMaker local mode operations while using LocalStack for S3 storage.
+The inference system automatically:
+- Detects the model framework (scikit-learn or TensorFlow)
+- Loads appropriate test data
+- Computes comprehensive metrics (MSE, R², prediction differences)
+- Handles serialization/deserialization appropriate for the model type
 
-## Testing Different SageMaker Model Frameworks
-
-The scripts can be adapted to work with any SageMaker model framework. To use a different framework:
-
-### XGBoost
+### Checking Job Status
 
 ```bash
-# Modify the SAGEMAKER_SCRIPT path in direct_step_functions.py
-SAGEMAKER_SCRIPT = os.path.join(
-    PARENT_DIR, 
-    'xgboost_script_mode_local_training_and_serving',
-    'your_script_name.py'
-)
+python async_ml_workflow.py status
 ```
 
-### PyTorch
+Displays the status of all background jobs, including:
+- Job type (training, deployment, inference)
+- Process ID
+- Status (RUNNING, COMPLETED, FAILED)
+- Start time
+- Job-specific parameters
+- Recent log entries
 
-```bash
-# Modify the SAGEMAKER_SCRIPT path in direct_step_functions.py
-SAGEMAKER_SCRIPT = os.path.join(
-    PARENT_DIR, 
-    'pytorch_script_mode_local_training_and_serving',
-    'your_script_name.py'
-)
-```
+### Special Inference Features
 
-### PyTorch NLP or Other Models
+#### TensorFlow Model Support
 
-Follow the same pattern, updating the script path to point to your specific model implementation.
+The inference system is optimized for TensorFlow models:
+- Auto-detects TensorFlow SavedModel format
+- Loads TF models using the correct serving signatures
+- Handles TF-specific serialization requirements
+- Processes both regression and classification models
 
-## Monitoring and Visualizing Workflows
+#### Multiple Inference Patterns
 
-### Using AWS Toolkit
+1. **Endpoint-based inference**: Standard SageMaker pattern using HTTP endpoints
+2. **Direct model loading**: Load models directly from artifacts without deploying
+3. **Lambda-triggered inference**: Allows integration with Step Functions
 
-1. Open AWS Toolkit in your IDE
-2. Connect to the LocalStack endpoint (http://localhost:4567)
-3. Navigate to Step Functions
-4. Select "sagemaker-local-direct" to view the workflow
-5. Click on any execution to see its status and details
+#### Performance Metrics
 
-### Using AWS CLI
+The inference system generates detailed model performance metrics:
+- Mean Squared Error (MSE)
+- R-squared (coefficient of determination)
+- Sample-by-sample prediction differences
+- Comparison visualizations (when using Jupyter)
 
-```bash
-# List all state machines
-aws --endpoint-url=http://localhost:4567 stepfunctions list-state-machines
+## Important Files and Components
+
+The system consists of these key files:
+
+1. **async_ml_workflow.py** - **MAIN ENTRY POINT**: Central script for all asynchronous operations
+   - Handles background job management
+   - Provides unified command interface
+   - Tracks job status and process management
+
+2. **local_train.py**: Training logic
+   - Supports multiple model types (random_forest, linear_regression, tensorflow)
+   - Creates model artifacts in standardized format
+   - Includes Lambda handler for Step Functions integration
+
+3. **local_serve.py**: Model deployment logic
+   - Creates Flask-based local endpoints
+   - Maps model types to appropriate serving logic
+   - Includes Lambda handler for Step Functions integration
+   
+4. **inference.py**: **INFERENCE FOCUS**
+   - Provides multiple inference methods (direct, boto3, predictor)
+   - Auto-detects model frameworks
+   - Generates comprehensive metrics
+   - Supports both endpoint and direct model inference
+   - Includes Lambda handler for workflow integration
+
+5. **localstack_ml_workflow.py**: LocalStack integration
+   - Creates S3 buckets with proper configuration
+   - Sets up IAM roles
+   - Configures proper S3 endpoint options
+
+## LocalStack Integration Notes
+
+When working with LocalStack for inference:
+
+1. **S3 Configuration**:
+   - S3 acceleration must be disabled
+   - Path-style addressing must be used
+   - LocalStack endpoint: http://localhost:4567
+
+2. **Environment Variables**:
+   ```
+   S3_USE_ACCELERATE_ENDPOINT=false
+   AWS_S3_DISABLE_ACCELERATE_ENDPOINT=true
+   ```
 
 # Get details of a specific state machine
 aws --endpoint-url=http://localhost:4567 stepfunctions describe-state-machine \
